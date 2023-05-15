@@ -15,7 +15,7 @@ public record Order(Long productId,
         if(isNull(productId) || productId < 0){
             throw new IllegalArgumentException("상품코드가 올바르지 않습니다.");
         }
-        if(isNull(productName) || productName.equals("") || productName.contains(REGEX)){
+        if(isNull(productName) || productName.equals("")){
             throw new IllegalArgumentException("상품이름이 올바르지 않습니다.");
         }
         if(isNull(price)){
