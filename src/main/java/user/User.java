@@ -5,9 +5,6 @@ import java.math.BigDecimal;
 import static java.util.Objects.isNull;
 
 public record User(Long id, String name, BigDecimal money) {
-    public User payment(BigDecimal target){
-        return new User(this.id, this.name, this.money.subtract(target));
-    }
 
     public User {
         if (isNull(id) || id < 0) {
@@ -19,7 +16,10 @@ public record User(Long id, String name, BigDecimal money) {
         if (isNull(money)) {
             throw new IllegalArgumentException("소지금이 올바른 값이 아닙니다.");
         }
+    }
 
+    public User payment(BigDecimal target){
+        return new User(this.id, this.name, this.money.subtract(target));
     }
 
 }

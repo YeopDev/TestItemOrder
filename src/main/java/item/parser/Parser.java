@@ -1,6 +1,6 @@
-package order.parser;
+package item.parser;
 
-import order.Order;
+import item.Item;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 interface Parser {
-    List<Order> execute() throws IOException;
+    List<Item> execute() throws IOException;
 
     class CsvParser implements Parser {
         private static final String DEFAULT_PATH = "./src/main/resources";
@@ -24,15 +24,15 @@ interface Parser {
         }
 
         @Override
-        public List<Order> execute() throws IOException {
+        public List<Item> execute() throws IOException {
             return Files.readAllLines(filePath)
                     .subList(1, Files.readAllLines(filePath).size())
                     .stream()
                     .map(raw -> byRaw(raw.split(REGEX)))
                     .collect(Collectors.toList());
         }
-        private Order byRaw(String... raws) {
-            return new Order(
+        private Item byRaw(String... raws) {
+            return new Item(
                     Long.valueOf(raws[0]),
                     raws[1],
                     new BigDecimal(raws[2]),

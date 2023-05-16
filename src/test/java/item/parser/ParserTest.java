@@ -1,6 +1,7 @@
-package order.parser;
+package item.parser;
 
-import order.Order;
+import item.Item;
+import item.parser.Parser;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,7 @@ class ParserTest {
 
     @Test
     void parseCsv() throws IOException {
-        List<Order> execute = parser.execute();
+        List<Item> execute = parser.execute();
 
         Assertions.assertThat(execute).isNotEmpty();
     }
