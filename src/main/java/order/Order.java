@@ -3,35 +3,51 @@ package order;
 import item.Item;
 
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
-public record Order(List<Item> items) {
+public record Order() {
     private static final Scanner sc = new Scanner(System.in);
-    private static final BigDecimal DELIVERY_FEE = new BigDecimal(2500);
 
-    private static DecimalFormat dc = new DecimalFormat("###,###,###,###");
+    private static final String REGEX = ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)";
 
-    public void itemInfo(List<Item> items){
+    public Order {
+
+    }
+
+    public void itemInfo(List<Item> items) {
         items.forEach(raw -> System.out.println(raw.itemInfo()));
     }
 
-    public String pickId(){
+    public String pickId() {
         System.out.print("상품번호 : ");
         return sc.nextLine();
     }
 
-    public String pickQuantity(){
+    public String pickQuantity() {
         System.out.print("수량 : ");
         return sc.nextLine();
     }
 
-    public BigDecimal productOrder(List<Map<String,Object>> orderList){
-        if(orderList.isEmpty()){
+    public List<Item> makeItemList(List<String> passingList) {
+        return IntStream.range(1, passingList.size())
+                .mapToObj(index -> byRaw(passingList.get(index).split(REGEX)))
+                .collect(Collectors.toList());
+    }
+
+    public Item byRaw(String... raws) {
+        return new Item(
+                Long.parseLong(raws[0]),
+                raws[1],
+                new BigDecimal(raws[2]),
+                Integer.parseInt(raws[3])
+        );
+    }
+
+    public BigDecimal orderTotalPrice(List<Item> itmes, List<Map<String, Object>> orderList) {
+        if (orderList.isEmpty()) {
             throw new IllegalArgumentException("주문리스트가 비어있습니다.");
         }
         BigDecimal totalPrice = new BigDecimal(0);
@@ -40,31 +56,44 @@ public record Order(List<Item> items) {
             long productId = Long.parseLong(order.get("상품번호").toString());
             int quantity = Integer.parseInt(order.get("수량").toString());
 
-            Optional<Item> matchingItem = items.stream()
-                    .filter(item -> item.productId() == productId)
-                    .findFirst();
+            Optional<Item> matchingItem = itmes.stream().filter(item -> item.productId() == productId).findFirst();
 
             if (matchingItem.isPresent()) {
                 Item item = matchingItem.get();
-                String productName = item.productName();
                 BigDecimal price = item.price();
-
-                System.out.println(productName + " - " + quantity + "개");
                 BigDecimal totalItemPrice = price.multiply(BigDecimal.valueOf(quantity));
                 totalPrice = totalPrice.add(totalItemPrice);
             }
         }
-        System.out.println("-------------------------------------- ");
-        System.out.println("주문금액: " + dc.format(chkDelivery(totalPrice)) +"원");
-        return chkDelivery(totalPrice);
+        return totalPrice;
     }
 
+    public List<Map<String, Object>> orderItemView(List<Item> itmes, List<Map<String, Object>> orderList) {
+        if (orderList.isEmpty()) {
+            throw new IllegalArgumentException("주문리스트가 비어있습니다.");
+        }
+        List<Map<String, Object>> viewList = new ArrayList<>();
+        for (Map<String, Object> order : orderList) {
+            long productId = Long.parseLong(order.get("상품번호").toString());
+            int quantity = Integer.parseInt(order.get("수량").toString());
+            Optional<Item> matchingItem = itmes.stream().filter(item -> item.productId() == productId).findFirst();
+            if (matchingItem.isPresent()) {
+                Item item = matchingItem.get();
+                String productName = item.productName();
+                Map<String, Object> map = new HashMap<>();
+                map.put("상품이름", productName);
+                map.put("수량", quantity);
+                viewList.add(map);
+            }
+        }
+        return viewList;
+    }
 
-    public BigDecimal chkDelivery(BigDecimal totalPrice){
+    public boolean chkDelivery(BigDecimal totalPrice) {
         if (totalPrice.compareTo(new BigDecimal(50000)) < 0) {
-            return totalPrice.add(DELIVERY_FEE);
-        }else{
-         return totalPrice;
+            return true;
+        } else {
+            return false;
         }
     }
 
