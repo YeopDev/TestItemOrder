@@ -27,6 +27,8 @@ public class OrderStart {
         InputScanner inputScanner = new InputScanner();
 
         while (true) {
+            String userFix = null;
+
             if (startYn) {
                 System.out.print("입력(o[order]: 주문, q[quit]: 종료) :");
                 userFix = inputScanner.checkOrderValidation();
@@ -36,7 +38,7 @@ public class OrderStart {
                     break;
                 }
                 System.out.println(" 상품번호  상품명  판매가격  재고수량 ");
-                order.itemInfo(items);
+                items.forEach(raw -> System.out.println(raw.itemInfo()));
                 startYn = false;
             }
 
