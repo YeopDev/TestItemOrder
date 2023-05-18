@@ -1,6 +1,9 @@
 import item.Item;
-import item.yeopParser.PassingFile;
+import item.parser.CsvParser;
+import item.parser.InputScanner;
+import item.parser.ItemRepository;
 import order.Order;
+import order.OrderDetail;
 import user.User;
 
 import java.io.IOException;
@@ -9,28 +12,26 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 public class OrderStart {
-    private static final Scanner sc = new Scanner(System.in);
     private static DecimalFormat dc = new DecimalFormat("###,###,###,###");
-
     private static final BigDecimal DELIVERY_FEE = new BigDecimal(2500);
 
     public static void main(String[] args) throws IOException {
-        PassingFile passingFile = new PassingFile("items_list.csv");
-        List<String> passingList = passingFile.passingExcute();
-
-        Order order = new Order();
         boolean startYn = true;
-        String userFix = "";
-        List<Item> items = order.makeItemList(passingList);
 
-        List<Map<String, Object>> orderList = new ArrayList<>();
+        ItemRepository itemRepository = new CsvParser();
+
+        List<Item> items = itemRepository.findAll();
+
+        List<OrderDetail> orderDetails = new ArrayList<>();
+
+        InputScanner inputScanner = new InputScanner();
 
         while (true) {
             if (startYn) {
                 System.out.print("입력(o[order]: 주문, q[quit]: 종료) :");
-                userFix = orderValidationChk(sc.next().toLowerCase());
+                userFix = inputScanner.checkOrderValidation();
                 if (userFix.equals("q") || userFix.equals("quit")) {
-                    sc.close();
+                    inputScanner.closeScanner();
                     System.out.println(" 종료합니다. ");
                     break;
                 }
@@ -38,57 +39,47 @@ public class OrderStart {
                 order.itemInfo(items);
                 startYn = false;
             }
-            Map<String, Object> map = new HashMap<>();
-            if (userFix.equals("o") || userFix.equals("order")) {
-                String productId = order.pickId();
-                String quantity = order.pickQuantity();
-                if (chkOrderEnd(productId, quantity)) {
-                    System.out.println("주문내역:");
-                    System.out.println("-------------------------------------- ");
-                    BigDecimal totalPrice = order.orderTotalPrice(items, orderList);
-                    List<Map<String,Object>> itemView = order.orderItemView(items, orderList);
-                    for(Map<String,Object> key : itemView){
-                        System.out.println(key.get("상품이름") + " - " + key.get("수량") + "개");
-                    }
-                    System.out.println("-------------------------------------- ");
-                    System.out.println("주문금액: " + dc.format(totalPrice) + "원");
-                    if (order.chkDelivery(totalPrice)) {
-                        System.out.println("배송비: " + dc.format(DELIVERY_FEE) + "원");
-                        totalPrice = totalPrice.add(DELIVERY_FEE);
-                    }
-                    System.out.println("-------------------------------------- ");
-                    User yeop = new User(0L, "yeop", new BigDecimal(100000));
-                    if (yeop.hasSufficientStock(items, orderList)) {
-                        yeop.payment(totalPrice);
-                        System.out.println("지불금액: " + dc.format(totalPrice) + "원");
-                        System.out.println("-------------------------------------- ");
-                        orderList.clear();
-                        startYn = true;
-                    }
+
+            System.out.print("상품번호 : ");
+            String productId = inputScanner.writeInfo();
+
+            System.out.print("수량 : ");
+            String quantity = inputScanner.writeInfo();
+
+            if (productId.isBlank() && quantity.isBlank()) {
+                System.out.println("주문내역:");
+                System.out.println("--------------------------------------");
+
+                Order order = new Order(orderDetails,items);
+
+                BigDecimal totalPrice = order.totalPrice();
+
+                List<OrderDetail> detailInfo = order.detailItemInfo();
+
+                for (OrderDetail key : detailInfo) {
+                    System.out.println(key.productName() + " - " + key.stockQuantity() + "개");
                 }
-                map.put("상품번호", productId);
-                map.put("수량", quantity);
-                orderList.add(map);
-            } else {
-                sc.close();
-                System.out.println(" 종료합니다. ");
-                break;
+
+                System.out.println("--------------------------------------");
+                System.out.println("주문금액: " + dc.format(totalPrice) + "원");
+
+                if (order.checkDelivery(totalPrice)) {
+                    System.out.println("배송비: " + dc.format(DELIVERY_FEE) + "원");
+                    totalPrice = totalPrice.add(DELIVERY_FEE);
+                }
+                System.out.println("--------------------------------------");
+
+                if (order.hasSufficientStock()) {
+                    new User(0L, "yeop", new BigDecimal(100000), totalPrice).payment(totalPrice);
+                    System.out.println("지불금액: " + dc.format(totalPrice) + "원");
+                    System.out.println("--------------------------------------");
+                    orderDetails.clear();
+                    startYn = true;
+                }
+
+            }else{
+                orderDetails.add(new OrderDetail(Long.parseLong(productId), "0", new BigDecimal(0), Integer.parseInt(quantity)));
             }
-        }
-    }
-
-    public static String orderValidationChk(String target) {
-        if (!target.matches("(o|q|order|quit)")) {
-            throw new IllegalArgumentException("o, order, q, quit 만 입력 가능합니다.");
-        }
-        return target;
-    }
-
-    public static boolean chkOrderEnd(String productId, String quantity) {
-        if (productId.isBlank() && quantity.isBlank()) {
-            return true;
-        } else {
-            return false;
         }
     }
 }

@@ -52,12 +52,11 @@ public record Order() {
         }
         BigDecimal totalPrice = new BigDecimal(0);
 
-        for (Map<String, Object> order : orderList) {
-            long productId = Long.parseLong(order.get("상품번호").toString());
-            int quantity = Integer.parseInt(order.get("수량").toString());
+        for (OrderDetail orderDetail : orderDetails) {
+            long productId = orderDetail.productId();
+            int quantity = orderDetail.stockQuantity();
 
-            Optional<Item> matchingItem = itmes.stream().filter(item -> item.productId() == productId).findFirst();
-
+            Optional<Item> matchingItem = items.stream().filter(item -> item.productId() == productId).findFirst();
             if (matchingItem.isPresent()) {
                 Item item = matchingItem.get();
                 BigDecimal price = item.price();
@@ -68,25 +67,36 @@ public record Order() {
         return totalPrice;
     }
 
-    public List<Map<String, Object>> orderItemView(List<Item> itmes, List<Map<String, Object>> orderList) {
-        if (orderList.isEmpty()) {
-            throw new IllegalArgumentException("주문리스트가 비어있습니다.");
+    public List<OrderDetail> detailItemInfo() {
+        return orderDetails.stream()
+                .map(orderDetail -> {
+                    long productId = orderDetail.productId();
+                    int quantity = orderDetail.stockQuantity();
+                    Optional<Item> matchingItem = items.stream().filter(item -> item.productId() == productId).findFirst();
+                    if (matchingItem.isPresent()) {
+                        Item item = matchingItem.get();
+                        return new OrderDetail(item.productId(), item.productName(), item.price(), quantity);
+                    } else {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    public boolean hasSufficientStock() { //재고수량 체크
+        for (OrderDetail orderDetail : orderDetails) {
+            long productId = orderDetail.productId();
+            int quantity = orderDetail.stockQuantity();
+
+            items.stream()
+                    .filter(item -> item.productId().equals(productId))
+                    .findFirst()
+                    .ifPresent(matchItem -> {
+                        matchItem.CheckProductStock(productId, quantity);
+                    });
         }
-        List<Map<String, Object>> viewList = new ArrayList<>();
-        for (Map<String, Object> order : orderList) {
-            long productId = Long.parseLong(order.get("상품번호").toString());
-            int quantity = Integer.parseInt(order.get("수량").toString());
-            Optional<Item> matchingItem = itmes.stream().filter(item -> item.productId() == productId).findFirst();
-            if (matchingItem.isPresent()) {
-                Item item = matchingItem.get();
-                String productName = item.productName();
-                Map<String, Object> map = new HashMap<>();
-                map.put("상품이름", productName);
-                map.put("수량", quantity);
-                viewList.add(map);
-            }
-        }
-        return viewList;
+        return true;
     }
 
     public boolean chkDelivery(BigDecimal totalPrice) {

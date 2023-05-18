@@ -1,4 +1,4 @@
-package item.yeopParser;
+package item.parser;
 
 import item.Item;
 
