@@ -21,8 +21,4 @@ public class InputScanner {
     public String writeInfo() {
         return sc.nextLine();
     }
-
-    public void closeScanner(){
-        sc.close();
-    }
 }

@@ -3,13 +3,14 @@ import item.parser.CsvParser;
 import item.parser.InputScanner;
 import item.parser.ItemRepository;
 import order.Order;
-import order.OrderDetail;
 import user.User;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class OrderStart {
     private static DecimalFormat dc = new DecimalFormat("###,###,###,###");
@@ -21,8 +22,7 @@ public class OrderStart {
         ItemRepository itemRepository = new CsvParser();
 
         List<Item> items = itemRepository.findAll();
-
-        List<OrderDetail> orderDetails = new ArrayList<>();
+        User user = new User(0L, "yeop", new BigDecimal(100_000), BigDecimal.ZERO, new ArrayList<>());
 
         InputScanner inputScanner = new InputScanner();
 
@@ -33,7 +33,6 @@ public class OrderStart {
                 System.out.print("입력(o[order]: 주문, q[quit]: 종료) :");
                 userFix = inputScanner.checkOrderValidation();
                 if (userFix.equals("q") || userFix.equals("quit")) {
-                    inputScanner.closeScanner();
                     System.out.println(" 종료합니다. ");
                     break;
                 }
@@ -52,14 +51,40 @@ public class OrderStart {
                 System.out.println("주문내역:");
                 System.out.println("--------------------------------------");
 
-                Order order = new Order(orderDetails,items);
+                Order order = new Order(user);
+                List<Item> orderDetails = order.orderDetail();
+                BigDecimal totalPrice = orderDetails.stream()
+                        .flatMap(orderDetail -> {
+                            long itemProductId = orderDetail.productId();
+                            int itemQuantity = orderDetail.stockQuantity();
+                            Optional<Item> matchingItem = items.stream().filter(item -> item.productId() == itemProductId).findFirst();
+                            if (matchingItem.isPresent()) {
+                                Item item = matchingItem.get();
+                                BigDecimal totalItemPrice = item.price().multiply(BigDecimal.valueOf(itemQuantity));
+                                return Stream.of(totalItemPrice);
+                            } else {
+                                return Stream.empty();
+                            }
+                        })
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal totalPrice = order.totalPrice();
+                List<Item> detailInfo = orderDetails.stream()
+                        .map(orderItem -> {
+                            long orderProductId = orderItem.productId();
+                            int orderQuantity = orderItem.stockQuantity();
+                            Optional<Item> matchingItem = items.stream().filter(item -> item.productId().equals(orderProductId)).findFirst();
+                            if (matchingItem.isPresent()) {
+                                Item getItem = matchingItem.get();
+                                return new Item(getItem.productId(), getItem.productName(), getItem.price(), orderQuantity);
+                            } else {
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
 
-                List<OrderDetail> detailInfo = order.detailItemInfo();
-
-                for (OrderDetail key : detailInfo) {
-                    System.out.println(key.productName() + " - " + key.stockQuantity() + "개");
+                for (Item item : detailInfo) {
+                    System.out.println(item.productName() + " - " + item.stockQuantity() + "개");
                 }
 
                 System.out.println("--------------------------------------");
@@ -71,16 +96,16 @@ public class OrderStart {
                 }
                 System.out.println("--------------------------------------");
 
-                if (order.hasSufficientStock()) {
-                    new User(0L, "yeop", new BigDecimal(100000), totalPrice).payment(totalPrice);
+                if (user.hasSufficientStock(items)) {
+                    user = user.payment(totalPrice);
                     System.out.println("지불금액: " + dc.format(totalPrice) + "원");
+                    System.out.println("user.money() = " + user.money());
                     System.out.println("--------------------------------------");
-                    orderDetails.clear();
                     startYn = true;
                 }
 
             }else{
-                orderDetails.add(new OrderDetail(Long.parseLong(productId), "0", new BigDecimal(0), Integer.parseInt(quantity)));
+                user.placeAnOrder(Long.parseLong(productId),Integer.parseInt(quantity));
             }
         }
     }

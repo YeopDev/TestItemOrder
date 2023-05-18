@@ -12,7 +12,7 @@ public class CsvParser implements ItemRepository {
     private static final String DEFAULT_PATH = "./src/main/resources";
 
     private static final String REGEX = ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)";
-    private String fileName = "items_list.csv";
+    private final String fileName = "items_list.csv";
 
     public List<Item> findAll() {
        return read().stream()

@@ -13,33 +13,33 @@ class UserTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-            "0:yeop:10000",
+            "0:yeop:10000:0",
     },
             delimiter = ':')
-    void userBuyItemNoThrownBy(Long id, String name, BigDecimal money) {
+    void userBuyItemNoThrownBy(Long id, String name, BigDecimal money, BigDecimal amount) {
         assertThatCode(
-                () -> new User(id, name, money)
+                () -> new User(id, name, money, amount)
         ).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
     @CsvSource(value = {
-            "-1:yeop:0",
+            "-1:yeop:0:0",
     }, delimiter = ':')
-    void userBuyItemThrownBy(Long id, String name, BigDecimal money) {
+    void userBuyItemThrownBy(Long id, String name, BigDecimal money, BigDecimal amount) {
         assertThatThrownBy(
-                () -> new User(id,name,money)
+                () -> new User(id, name, money, amount)
         ).isInstanceOf(IllegalArgumentException.class);
     }
 
     @ParameterizedTest
     @CsvSource(value = {
-            "0:yeop:10000",
+            "0:yeop:10000:1000",
     }, delimiter = ':')
-    void userMethodNoThrownBy(Long id, String name, BigDecimal money){
+    void userMethodNoThrownBy(Long id, String name, BigDecimal money, BigDecimal amount) {
         assertThatCode(
                 () -> {
-                    User user = new User(id,name,money).payment(BigDecimal.valueOf(1000L));
+                    User user = new User(id, name, money, amount).payment(amount);
                     Assertions.assertThat(user.money()).isEqualTo(BigDecimal.valueOf(9000L));
                 }
         ).doesNotThrowAnyException();

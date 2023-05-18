@@ -1,7 +1,6 @@
 package item;
 
 import exception.SoldOutException;
-import order.OrderDetail;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,10 +28,14 @@ public record Item(Long productId, String productName, BigDecimal price, Integer
         return productId() + "\t" + productName() + "\t" + price() + "\t" + stockQuantity();
     }
 
-    public void CheckProductStock(long productId, int quantity){
-        if (stockQuantity() < quantity) {
-            throw new SoldOutException("SoldOutException 발생. 주문한 상품량이 재고량보다 큽니다.");
+    public void checkProductStock(List<Item> items, long productId, int quantity) {
+        Optional<Item> matchingItem = items.stream().filter(item -> item.productId() == productId).findFirst();
+        if (matchingItem.isPresent()) {
+            Item item = matchingItem.get();
+            int stockQuantity = item.stockQuantity();
+            if (stockQuantity < quantity) {
+                throw new SoldOutException("SoldOutException 발생. 주문한 상품량이 재고량보다 큽니다.");
+            }
         }
     }
-
 }
