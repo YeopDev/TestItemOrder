@@ -19,7 +19,7 @@ public class OrderStart {
 
         List<Item> items = itemRepository.findAll();
 
-        User user = new User(0L, "yeop", 100_000, 0, new ArrayList<>());
+        User user = new User(0L, "yeop", 100_000, 0);
 
         List<Item> orderItems = new ArrayList<>();
 
@@ -49,15 +49,13 @@ public class OrderStart {
             if (id.isBlank() && quantity.isBlank()) {
                 orderItems = itemRepository.changeItemList(orderItems);
 
-                user = user.setUserOrderItems(orderItems);
-
-                Order order = new Order(user);
-
+                Order order = new Order(user,orderItems);
                 int totalPrice = order.calculateTotalPrice();
-                user = user.payment(totalPrice);
+                user = order.totalAmountPayment();
 
                 System.out.println("주문내역:");
                 System.out.println("--------------------------------------");
+
                 order.displayOrderList();
 
                 System.out.println("--------------------------------------");
@@ -66,7 +64,7 @@ public class OrderStart {
                 System.out.println("--------------------------------------");
 
                 if (itemRepository.hasSufficientStock(orderItems)) {
-                    System.out.println("지불금액: " + dc.format(order.totalAmountIncludingDeliveryFee()) + "원");
+                    System.out.println("지불금액: " + dc.format(user.amount()) + "원");
                     System.out.println("yeop의 소지금: " + dc.format(user.money()));
                     System.out.println("--------------------------------------");
                     orderItems.clear();
