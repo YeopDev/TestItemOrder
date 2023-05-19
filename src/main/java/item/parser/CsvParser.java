@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 
 public class CsvParser implements ItemRepository {
     private static final String DEFAULT_PATH = "./src/main/resources";
-
     private static final String REGEX = ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)";
     private final String fileName = "items_list.csv";
 
@@ -30,12 +29,12 @@ public class CsvParser implements ItemRepository {
     public List<Item> detailInfo(List<Item> orderDetails, List<Item> items) {
         return orderDetails.stream()
                 .map(orderItem -> {
-                    long orderProductId = orderItem.itemId();
-                    int orderQuantity = orderItem.itemStockQuantity();
-                    Optional<Item> matchingItem = items.stream().filter(item -> item.itemId() == orderProductId).findFirst();
+                    long orderProductId = orderItem.id();
+                    int orderQuantity = orderItem.stockQuantity();
+                    Optional<Item> matchingItem = items.stream().filter(item -> item.id() == orderProductId).findFirst();
                     if (matchingItem.isPresent()) {
                         Item getItem = matchingItem.get();
-                        return new Item(getItem.itemId(), getItem.itemName(), getItem.itemPrice(), orderQuantity);
+                        return new Item(getItem.id(), getItem.name(), getItem.price(), orderQuantity);
                     } else {
                         return null;
                     }
@@ -48,12 +47,12 @@ public class CsvParser implements ItemRepository {
     public int totalPrice(List<Item> orderDetails, List<Item> items) {
         return orderDetails.stream()
                 .flatMap(orderDetail -> {
-                    long itemProductId = orderDetail.itemId();
-                    int itemQuantity = orderDetail.itemStockQuantity();
-                    Optional<Item> matchingItem = items.stream().filter(item -> item.itemId() == itemProductId).findFirst();
+                    long id = orderDetail.id();
+                    int quantity = orderDetail.stockQuantity();
+                    Optional<Item> matchingItem = items.stream().filter(item -> item.id() == id).findFirst();
                     if (matchingItem.isPresent()) {
                         Item item = matchingItem.get();
-                        int totalItemPrice = item.itemPrice() * itemQuantity;
+                        int totalItemPrice = item.price() * quantity;
                         return Stream.of(totalItemPrice);
                     } else {
                         return Stream.empty();
@@ -65,13 +64,13 @@ public class CsvParser implements ItemRepository {
     @Override
     public boolean hasSufficientStock(List<Item> orderDetails, List<Item> items) {
         for (Item orderDetail : orderDetails) {
-            long itemId = orderDetail.itemId();
-            int quantity = orderDetail.itemStockQuantity();
+            long id = orderDetail.id();
+            int quantity = orderDetail.stockQuantity();
             items.stream()
-                    .filter(item -> item.itemId().equals(itemId))
+                    .filter(item -> item.id().equals(id))
                     .findFirst()
                     .ifPresent(matchItem -> {
-                        matchItem.checkProductStock(items, itemId, quantity);
+                        matchItem.checkProductStock(items, id, quantity);
                     });
         }
         return true;

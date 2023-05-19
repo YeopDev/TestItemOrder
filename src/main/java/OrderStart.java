@@ -55,7 +55,7 @@ public class OrderStart {
                 List<Item> detailInfo = itemRepository.detailInfo(orderDetails, items);
 
                 for (Item item : detailInfo) {
-                    System.out.println(item.itemName() + " - " + item.itemStockQuantity() + "개");
+                    System.out.println(item.name() + " - " + item.stockQuantity() + "개");
                 }
 
                 System.out.println("--------------------------------------");
