@@ -53,35 +53,9 @@ public class OrderStart {
 
                 Order order = new Order(user);
                 List<Item> orderDetails = order.orderDetail();
-                BigDecimal totalPrice = orderDetails.stream()
-                        .flatMap(orderDetail -> {
-                            long itemProductId = orderDetail.productId();
-                            int itemQuantity = orderDetail.stockQuantity();
-                            Optional<Item> matchingItem = items.stream().filter(item -> item.productId() == itemProductId).findFirst();
-                            if (matchingItem.isPresent()) {
-                                Item item = matchingItem.get();
-                                BigDecimal totalItemPrice = item.price().multiply(BigDecimal.valueOf(itemQuantity));
-                                return Stream.of(totalItemPrice);
-                            } else {
-                                return Stream.empty();
-                            }
-                        })
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                List<Item> detailInfo = orderDetails.stream()
-                        .map(orderItem -> {
-                            long orderProductId = orderItem.productId();
-                            int orderQuantity = orderItem.stockQuantity();
-                            Optional<Item> matchingItem = items.stream().filter(item -> item.productId().equals(orderProductId)).findFirst();
-                            if (matchingItem.isPresent()) {
-                                Item getItem = matchingItem.get();
-                                return new Item(getItem.productId(), getItem.productName(), getItem.price(), orderQuantity);
-                            } else {
-                                return null;
-                            }
-                        })
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
+                BigDecimal totalPrice = itemRepository.totalPrice(orderDetails, items);
+                List<Item> detailInfo = itemRepository.detailInfo(orderDetails,items);
 
                 for (Item item : detailInfo) {
                     System.out.println(item.productName() + " - " + item.stockQuantity() + "개");
