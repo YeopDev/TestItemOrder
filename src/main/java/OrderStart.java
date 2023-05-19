@@ -5,24 +5,21 @@ import item.parser.ItemRepository;
 import order.Order;
 import user.User;
 
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.text.DecimalFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OrderStart {
     private static DecimalFormat dc = new DecimalFormat("###,###,###,###");
-    private static final BigDecimal DELIVERY_FEE = new BigDecimal(2500);
+    private static final int DELIVERY_FEE = 2_500;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         boolean startYn = true;
 
         ItemRepository itemRepository = new CsvParser();
 
         List<Item> items = itemRepository.findAll();
-        User user = new User(0L, "yeop", new BigDecimal(100_000), BigDecimal.ZERO, new ArrayList<>());
+        User user = new User(0L, "yeop", 100_000, 0, new ArrayList<>());
 
         InputScanner inputScanner = new InputScanner();
 
@@ -54,11 +51,11 @@ public class OrderStart {
                 Order order = new Order(user);
                 List<Item> orderDetails = order.orderDetail();
 
-                BigDecimal totalPrice = itemRepository.totalPrice(orderDetails, items);
-                List<Item> detailInfo = itemRepository.detailInfo(orderDetails,items);
+                int totalPrice = itemRepository.totalPrice(orderDetails, items);
+                List<Item> detailInfo = itemRepository.detailInfo(orderDetails, items);
 
                 for (Item item : detailInfo) {
-                    System.out.println(item.productName() + " - " + item.stockQuantity() + "개");
+                    System.out.println(item.itemName() + " - " + item.itemStockQuantity() + "개");
                 }
 
                 System.out.println("--------------------------------------");
@@ -66,20 +63,19 @@ public class OrderStart {
 
                 if (order.checkDelivery(totalPrice)) {
                     System.out.println("배송비: " + dc.format(DELIVERY_FEE) + "원");
-                    totalPrice = totalPrice.add(DELIVERY_FEE);
+                    totalPrice += DELIVERY_FEE;
                 }
                 System.out.println("--------------------------------------");
 
-                if (user.hasSufficientStock(items)) {
+                if (itemRepository.hasSufficientStock(orderDetails, items)) {
                     user = user.payment(totalPrice);
                     System.out.println("지불금액: " + dc.format(totalPrice) + "원");
-                    System.out.println("user.money() = " + user.money());
                     System.out.println("--------------------------------------");
                     startYn = true;
                 }
 
-            }else{
-                user.placeAnOrder(Long.parseLong(productId),Integer.parseInt(quantity));
+            } else {
+                user.placeAnOrder(Long.parseLong(productId), Integer.parseInt(quantity));
             }
         }
     }

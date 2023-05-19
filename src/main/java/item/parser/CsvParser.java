@@ -3,7 +3,6 @@ package item.parser;
 import item.Item;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -20,10 +19,10 @@ public class CsvParser implements ItemRepository {
 
     @Override
     public List<Item> findAll() {
-       return read().stream()
+        return read().stream()
                 .skip(1)
                 .map(s -> s.split(REGEX))
-                .map(row -> new Item(Long.parseLong(row[0]), row[1], new BigDecimal(row[2]), Integer.parseInt(row[3])))
+                .map(row -> new Item(Long.parseLong(row[0]), row[1], Integer.parseInt(row[2]), Integer.parseInt(row[3])))
                 .toList();
     }
 
@@ -31,12 +30,12 @@ public class CsvParser implements ItemRepository {
     public List<Item> detailInfo(List<Item> orderDetails, List<Item> items) {
         return orderDetails.stream()
                 .map(orderItem -> {
-                    long orderProductId = orderItem.productId();
-                    int orderQuantity = orderItem.stockQuantity();
-                    Optional<Item> matchingItem = items.stream().filter(item -> item.productId().equals(orderProductId)).findFirst();
+                    long orderProductId = orderItem.itemId();
+                    int orderQuantity = orderItem.itemStockQuantity();
+                    Optional<Item> matchingItem = items.stream().filter(item -> item.itemId() == orderProductId).findFirst();
                     if (matchingItem.isPresent()) {
                         Item getItem = matchingItem.get();
-                        return new Item(getItem.productId(), getItem.productName(), getItem.price(), orderQuantity);
+                        return new Item(getItem.itemId(), getItem.itemName(), getItem.itemPrice(), orderQuantity);
                     } else {
                         return null;
                     }
@@ -46,26 +45,41 @@ public class CsvParser implements ItemRepository {
     }
 
     @Override
-    public BigDecimal totalPrice(List<Item> orderDetails, List<Item> items) {
+    public int totalPrice(List<Item> orderDetails, List<Item> items) {
         return orderDetails.stream()
                 .flatMap(orderDetail -> {
-                    long itemProductId = orderDetail.productId();
-                    int itemQuantity = orderDetail.stockQuantity();
-                    Optional<Item> matchingItem = items.stream().filter(item -> item.productId() == itemProductId).findFirst();
+                    long itemProductId = orderDetail.itemId();
+                    int itemQuantity = orderDetail.itemStockQuantity();
+                    Optional<Item> matchingItem = items.stream().filter(item -> item.itemId() == itemProductId).findFirst();
                     if (matchingItem.isPresent()) {
                         Item item = matchingItem.get();
-                        BigDecimal totalItemPrice = item.price().multiply(BigDecimal.valueOf(itemQuantity));
+                        int totalItemPrice = item.itemPrice() * itemQuantity;
                         return Stream.of(totalItemPrice);
                     } else {
                         return Stream.empty();
                     }
                 })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(0, Integer::sum);
+    }
+
+    @Override
+    public boolean hasSufficientStock(List<Item> orderDetails, List<Item> items) {
+        for (Item orderDetail : orderDetails) {
+            long itemId = orderDetail.itemId();
+            int quantity = orderDetail.itemStockQuantity();
+            items.stream()
+                    .filter(item -> item.itemId().equals(itemId))
+                    .findFirst()
+                    .ifPresent(matchItem -> {
+                        matchItem.checkProductStock(items, itemId, quantity);
+                    });
+        }
+        return true;
     }
 
     private List<String> read() {
         try {
-            return Files.readAllLines(Paths.get(DEFAULT_PATH +"/"+ fileName));
+            return Files.readAllLines(Paths.get(DEFAULT_PATH + "/" + fileName));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
