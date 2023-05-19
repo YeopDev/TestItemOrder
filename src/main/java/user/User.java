@@ -1,14 +1,13 @@
 package user;
 
-import item.parser.InputScanner;
+import item.Item;
 
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.util.Objects.isNull;
 
-public record User(Long id, String name, int money, int amount) implements InputScanner {
-    private static final Scanner sc = new Scanner(System.in);
-
+public record User(Long id, String name, int money, int amount, List<Item> orderItems) {
     public User {
         if (isNull(id) || id < 0) {
             throw new IllegalArgumentException("id가 올바른 값이 아닙니다.");
@@ -21,22 +20,12 @@ public record User(Long id, String name, int money, int amount) implements Input
         }
     }
 
-    @Override
-    public String checkOrderValidation() {
-        String target = sc.nextLine().toLowerCase();
-        if (!target.matches("(o|q|order|quit)")) {
-            throw new IllegalArgumentException("o, order, q, quit 만 입력 가능합니다.");
-        }
-        return target;
-    }
-
-    @Override
-    public String writeInfo() {
-        return sc.nextLine();
+    public User setUserOrderItems(List<Item> changeOrderItems) {
+        return new User(id(), name(), money(), amount(), changeOrderItems);
     }
 
     public User payment(int target) {
         int afterMoney = money - target;
-        return new User(this.id, this.name, afterMoney, 0);
+        return new User(this.id, this.name, afterMoney, 0, new ArrayList<>());
     }
 }
