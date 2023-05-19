@@ -1,10 +1,5 @@
 package item;
 
-import exception.SoldOutException;
-
-import java.util.List;
-import java.util.Optional;
-
 import static java.util.Objects.isNull;
 
 public record Item(Long id, String name, int price, int stockQuantity) {
