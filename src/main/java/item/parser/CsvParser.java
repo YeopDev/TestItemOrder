@@ -23,6 +23,7 @@ public class CsvParser implements ItemRepository {
         return items;
     }
 
+    //??
     @Override
     public List<Item> changeItemList(List<Item> orderDetails){
         return orderDetails.stream()
@@ -32,6 +33,7 @@ public class CsvParser implements ItemRepository {
                 .collect(Collectors.toList());
     }
 
+    //?????
     @Override
     public boolean hasSufficientStock(List<Item> orderDetails) {
         return orderDetails.stream().allMatch(orderDetail -> {
@@ -61,6 +63,7 @@ public class CsvParser implements ItemRepository {
         try {
             return Files.readAllLines(Paths.get(DEFAULT_PATH + "/" + fileName));
         } catch (IOException e) {
+            //Exception -> Concrete Exception
             throw new RuntimeException(e);
         }
     }

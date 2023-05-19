@@ -28,6 +28,7 @@ public record Order(User user, List<Item> orderItems) {
         return DELIVERY_FEE;
     }
 
+    //bad bad case
     public User totalAmountPayment(){
         int totalAmountIncludingDeliveryFee = calculateTotalPrice();
         if(checkDelivery(totalAmountIncludingDeliveryFee)){
