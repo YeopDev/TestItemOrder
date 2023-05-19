@@ -7,9 +7,11 @@ import java.util.List;
 public interface ItemRepository {
     List<Item> findAll();
 
-    List<Item> detailInfo(List<Item> orderDetails, List<Item> items);
+    List<Item> detailInfo(List<Item> orderDetails);
 
-    int totalPrice(List<Item> orderDetails, List<Item> items);
+    int totalPrice(List<Item> orderDetails);
 
-    boolean hasSufficientStock(List<Item> orderDetails, List<Item> items);
+    boolean hasSufficientStock(List<Item> orderDetails);
+
+    void checkProductStock(long productId, int quantity);
 }

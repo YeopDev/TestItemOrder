@@ -1,6 +1,5 @@
 import item.Item;
 import item.parser.CsvParser;
-import item.parser.InputScanner;
 import item.parser.ItemRepository;
 import order.Order;
 import user.User;
@@ -19,9 +18,8 @@ public class OrderStart {
         ItemRepository itemRepository = new CsvParser();
 
         List<Item> items = itemRepository.findAll();
-        User user = new User(0L, "yeop", 100_000, 0);
 
-        InputScanner inputScanner = new InputScanner();
+        User user = new User(0L, "yeop", 10_000_000, 0);
 
         List<Item> orderList = new ArrayList<>();
 
@@ -30,7 +28,7 @@ public class OrderStart {
 
             if (startYn) {
                 System.out.print("입력(o[order]: 주문, q[quit]: 종료) :");
-                userFix = inputScanner.checkOrderValidation();
+                userFix = user.checkOrderValidation();
                 if (userFix.equals("q") || userFix.equals("quit")) {
                     System.out.println(" 종료합니다. ");
                     break;
@@ -41,19 +39,18 @@ public class OrderStart {
             }
 
             System.out.print("상품번호 : ");
-            String id = inputScanner.writeInfo();
+            String id = user.writeInfo();
 
             System.out.print("수량 : ");
-            String quantity = inputScanner.writeInfo();
+            String quantity = user.writeInfo();
 
             if (id.isBlank() && quantity.isBlank()) {
                 System.out.println("주문내역:");
                 System.out.println("--------------------------------------");
 
-                Order order = new Order(user);
-
-                int totalPrice = itemRepository.totalPrice(orderList, items);
-                List<Item> detailInfo = itemRepository.detailInfo(orderList, items);
+                Order order = new Order(orderList);
+                int totalPrice = order.calculateTotalPrice(itemRepository);
+                List<Item> detailInfo = order.displayItems(itemRepository);
 
                 for (Item item : detailInfo) {
                     System.out.println(item.name() + " - " + item.stockQuantity() + "개");
@@ -69,7 +66,7 @@ public class OrderStart {
 
                 System.out.println("--------------------------------------");
 
-                if (itemRepository.hasSufficientStock(orderList, items)) {
+                if (itemRepository.hasSufficientStock(orderList)) {
                     user = user.payment(totalPrice);
                     System.out.println("지불금액: " + dc.format(totalPrice) + "원");
                     System.out.println("yeop의 소지금: " + dc.format(user.money()));
