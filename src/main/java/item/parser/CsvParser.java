@@ -7,10 +7,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CsvParser implements ItemRepository {
     private static final String DEFAULT_PATH = "./src/main/resources";
@@ -26,34 +24,12 @@ public class CsvParser implements ItemRepository {
     }
 
     @Override
-    public List<Item> detailInfo(List<Item> orderDetails) {
-        return orderDetails.stream().map(orderItem -> {
-            long orderProductId = orderItem.id();
-            int orderQuantity = orderItem.stockQuantity();
-            Optional<Item> matchingItem = items.stream().filter(item -> item.id() == orderProductId).findFirst();
-            if (matchingItem.isPresent()) {
-                Item getItem = matchingItem.get();
-                return new Item(getItem.id(), getItem.name(), getItem.price(), orderQuantity);
-            } else {
-                return null;
-            }
-        }).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    @Override
-    public int totalPrice(List<Item> orderDetails) {
-        return orderDetails.stream().flatMap(orderDetail -> {
-            long id = orderDetail.id();
-            int quantity = orderDetail.stockQuantity();
-            Optional<Item> matchingItem = items.stream().filter(item -> item.id() == id).findFirst();
-            if (matchingItem.isPresent()) {
-                Item item = matchingItem.get();
-                int totalItemPrice = item.price() * quantity;
-                return Stream.of(totalItemPrice);
-            } else {
-                return Stream.empty();
-            }
-        }).reduce(0, Integer::sum);
+    public List<Item> changeItemList(List<Item> orderDetails){
+        return orderDetails.stream()
+                .flatMap(orderDetail -> items.stream()
+                        .filter(item -> item.id() == orderDetail.id())
+                        .map(item -> new Item(item.id(), item.name(), item.price(), orderDetail.stockQuantity())))
+                .collect(Collectors.toList());
     }
 
     @Override

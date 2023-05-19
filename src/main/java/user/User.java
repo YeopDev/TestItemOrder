@@ -39,5 +39,4 @@ public record User(Long id, String name, int money, int amount) implements Input
         int afterMoney = money - target;
         return new User(this.id, this.name, afterMoney, 0);
     }
-
 }

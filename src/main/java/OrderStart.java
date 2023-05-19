@@ -19,7 +19,7 @@ public class OrderStart {
 
         List<Item> items = itemRepository.findAll();
 
-        User user = new User(0L, "yeop", 10_000_000, 0);
+        User user = new User(0L, "yeop", 100_000, 0);
 
         List<Item> orderList = new ArrayList<>();
 
@@ -47,14 +47,12 @@ public class OrderStart {
             if (id.isBlank() && quantity.isBlank()) {
                 System.out.println("주문내역:");
                 System.out.println("--------------------------------------");
-
+                orderList = itemRepository.changeItemList(orderList);
                 Order order = new Order(orderList);
-                int totalPrice = order.calculateTotalPrice(itemRepository);
-                List<Item> detailInfo = order.displayItems(itemRepository);
 
-                for (Item item : detailInfo) {
-                    System.out.println(item.name() + " - " + item.stockQuantity() + "개");
-                }
+                int totalPrice = order.calculateTotalPrice();
+
+                order.displayOrderList();
 
                 System.out.println("--------------------------------------");
                 System.out.println("주문금액: " + dc.format(totalPrice) + "원");
