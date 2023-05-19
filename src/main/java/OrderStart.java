@@ -19,9 +19,11 @@ public class OrderStart {
         ItemRepository itemRepository = new CsvParser();
 
         List<Item> items = itemRepository.findAll();
-        User user = new User(0L, "yeop", 100_000, 0, new ArrayList<>());
+        User user = new User(0L, "yeop", 100_000, 0);
 
         InputScanner inputScanner = new InputScanner();
+
+        List<Item> orderList = new ArrayList<>();
 
         while (true) {
             String userFix = null;
@@ -39,20 +41,19 @@ public class OrderStart {
             }
 
             System.out.print("상품번호 : ");
-            String productId = inputScanner.writeInfo();
+            String id = inputScanner.writeInfo();
 
             System.out.print("수량 : ");
             String quantity = inputScanner.writeInfo();
 
-            if (productId.isBlank() && quantity.isBlank()) {
+            if (id.isBlank() && quantity.isBlank()) {
                 System.out.println("주문내역:");
                 System.out.println("--------------------------------------");
 
                 Order order = new Order(user);
-                List<Item> orderDetails = order.orderDetail();
 
-                int totalPrice = itemRepository.totalPrice(orderDetails, items);
-                List<Item> detailInfo = itemRepository.detailInfo(orderDetails, items);
+                int totalPrice = itemRepository.totalPrice(orderList, items);
+                List<Item> detailInfo = itemRepository.detailInfo(orderList, items);
 
                 for (Item item : detailInfo) {
                     System.out.println(item.name() + " - " + item.stockQuantity() + "개");
@@ -65,17 +66,20 @@ public class OrderStart {
                     System.out.println("배송비: " + dc.format(DELIVERY_FEE) + "원");
                     totalPrice += DELIVERY_FEE;
                 }
+
                 System.out.println("--------------------------------------");
 
-                if (itemRepository.hasSufficientStock(orderDetails, items)) {
+                if (itemRepository.hasSufficientStock(orderList, items)) {
                     user = user.payment(totalPrice);
                     System.out.println("지불금액: " + dc.format(totalPrice) + "원");
+                    System.out.println("yeop의 소지금: " + dc.format(user.money()));
                     System.out.println("--------------------------------------");
+                    orderList.clear();
                     startYn = true;
                 }
 
             } else {
-                user.placeAnOrder(Long.parseLong(productId), Integer.parseInt(quantity));
+                orderList.add(new Item(Long.parseLong(id), "0", 0, Integer.parseInt(quantity)));
             }
         }
     }
