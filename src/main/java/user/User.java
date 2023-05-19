@@ -16,7 +16,7 @@ public record User(Long id, String name, int money, int amount) {
         if (money < target) {
             throw new IllegalArgumentException("소지금이 지불금액보다 작습니다.");
         }
-        return money - target;
-//        return new User(this.id, this.name, afterMoney, 0);
+        int remainingBalance  = money - target;
+        return remainingBalance;
     }
 }

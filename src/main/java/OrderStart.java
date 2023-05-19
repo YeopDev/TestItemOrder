@@ -50,22 +50,21 @@ public class OrderStart {
                 orderItems = itemRepository.changeItemList(orderItems);
 
                 Order order = new Order(user,orderItems);
-                int totalPrice = order.calculateTotalPrice();
                 user = order.totalAmountPayment();
+
+                items = itemRepository.updateItems(orderItems);
 
                 System.out.println("주문내역:");
                 System.out.println("--------------------------------------");
-
-                order.displayOrderList();
-
+                System.out.println(order.displayOrderList());
                 System.out.println("--------------------------------------");
-                System.out.println("주문금액: " + dc.format(totalPrice) + "원");
-                if(order.checkDelivery(totalPrice)) System.out.println("배송비: " + dc.format(order.getDeliveryFee()) + "원");
+                System.out.println("주문금액: " + dc.format(order.calculateTotalPrice()) + "원");
+                if(order.checkDelivery()) System.out.println("배송비: " + dc.format(order.getDeliveryFee()) + "원");
                 System.out.println("--------------------------------------");
 
                 if (itemRepository.hasSufficientStock(orderItems)) {
                     System.out.println("지불금액: " + dc.format(user.amount()) + "원");
-                    System.out.println("yeop의 소지금: " + dc.format(user.money()));
+                    System.out.println("user의 소지금: " + dc.format(user.money()) + "원");
                     System.out.println("--------------------------------------");
                     orderItems.clear();
                     startYn = true;

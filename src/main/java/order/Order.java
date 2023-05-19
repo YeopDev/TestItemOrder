@@ -4,6 +4,7 @@ import item.Item;
 import user.User;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public record Order(User user, List<Item> orderItems) {
     private static final int DELIVERY_FEE = 2_500;
@@ -14,14 +15,18 @@ public record Order(User user, List<Item> orderItems) {
                 .sum();
     }
 
-    public void displayOrderList(){
-        for (Item item : orderItems()) {
-            System.out.println(item.name() + " - " + item.stockQuantity() + "개");
-        }
+    //bad case
+    //hint: I/O -> entity ?
+    public String displayOrderList(){
+        return orderItems.stream()
+                .map(item -> item.name() + " - " + item.stockQuantity() + "개")
+                .collect(Collectors.joining("\n"));
     }
 
-    public boolean checkDelivery(int totalPrice) {
-        return totalPrice < 50000;
+    //bad case
+    //totalPrice는 Order가 계산하는데 이걸 왜 또 밖에서 받아와야 함? 그렇네?
+    public boolean checkDelivery() {
+        return calculateTotalPrice() < 50000;
     }
 
     public int getDeliveryFee(){
@@ -31,7 +36,7 @@ public record Order(User user, List<Item> orderItems) {
     //bad bad case
     public User totalAmountPayment(){
         int totalAmountIncludingDeliveryFee = calculateTotalPrice();
-        if(checkDelivery(totalAmountIncludingDeliveryFee)){
+        if(checkDelivery()){
             totalAmountIncludingDeliveryFee += DELIVERY_FEE;
         }
         return new User(user.id(),user.name(),user.payment(totalAmountIncludingDeliveryFee),totalAmountIncludingDeliveryFee);

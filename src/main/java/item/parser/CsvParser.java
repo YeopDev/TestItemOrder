@@ -14,37 +14,60 @@ public class CsvParser implements ItemRepository {
     private static final String DEFAULT_PATH = "./src/main/resources";
     private static final String REGEX = ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)";
     private final String fileName = "items_list.csv";
-
     private List<Item> items;
 
     @Override
     public List<Item> findAll() {
-        this.items = read().stream().skip(1).map(s -> s.split(REGEX)).map(row -> new Item(Long.parseLong(row[0]), row[1], Integer.parseInt(row[2]), Integer.parseInt(row[3]))).toList();
+        this.items = read().stream()
+                .skip(1)
+                .map(s -> s.split(REGEX))
+                .map(row -> new Item(Long.parseLong(row[0]), row[1], Integer.parseInt(row[2]), Integer.parseInt(row[3])))
+                .toList();
         return items;
     }
 
     //??
     @Override
-    public List<Item> changeItemList(List<Item> orderDetails){
-        return orderDetails.stream()
-                .flatMap(orderDetail -> items.stream()
-                        .filter(item -> item.id() == orderDetail.id())
-                        .map(item -> new Item(item.id(), item.name(), item.price(), orderDetail.stockQuantity())))
+    public List<Item> changeItemList(List<Item> orderItems) {
+        return orderItems.stream()
+                .flatMap(orderItem -> this.items.stream()
+                        .filter(item -> item.id() == orderItem.id())
+                        .map(item -> new Item(item.id(), item.name(), item.price(), orderItem.stockQuantity())))
+                .collect(Collectors.toList());
+    }
+
+    //??
+    @Override
+    public List<Item> updateItems(List<Item> orderItems) {
+        return items.stream()
+                .map(item -> {
+                    Optional<Item> matchingOrderItem = orderItems.stream()
+                            .filter(orderItem -> orderItem.id() == item.id())
+                            .findFirst();
+                    if (matchingOrderItem.isPresent()) {
+                        int orderQuantity = matchingOrderItem.get().stockQuantity();
+                        int updatedStockQuantity = item.stockQuantity() - orderQuantity;
+                        return new Item(item.id(), item.name(), item.price(), updatedStockQuantity);
+                    } else {
+                        return item;
+                    }
+                })
                 .collect(Collectors.toList());
     }
 
     //?????
     @Override
-    public boolean hasSufficientStock(List<Item> orderDetails) {
-        return orderDetails.stream().allMatch(orderDetail -> {
-            long id = orderDetail.id();
-            int quantity = orderDetail.stockQuantity();
-            Optional<Item> matchingItem = items.stream().filter(item -> item.id().equals(id)).findFirst();
-            return matchingItem.map(item -> {
-                checkProductStock(item.id(), quantity);
-                return item.stockQuantity() >= quantity;
-            }).orElse(false);
-        });
+    public boolean hasSufficientStock(List<Item> orderItems) {
+        return orderItems.stream()
+                .allMatch(orderItem -> {
+                    long id = orderItem.id();
+                    int quantity = orderItem.stockQuantity();
+                    Optional<Item> matchingItem = items.stream().filter(item -> item.id().equals(id)).findFirst();
+                    return matchingItem.map(item -> {
+                        checkProductStock(item.id(), quantity);
+                        return item.stockQuantity() >= quantity;
+                    }).orElse(false);
+                });
     }
 
     @Override
