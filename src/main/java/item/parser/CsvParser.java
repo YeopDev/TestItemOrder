@@ -1,6 +1,5 @@
 package item.parser;
 
-import exception.SoldOutException;
 import item.Item;
 
 import java.io.IOException;
@@ -17,7 +16,7 @@ public class CsvParser implements ItemRepository {
     private List<Item> items;
 
     @Override
-    public List<Item> findAll() {
+    public List<Item> findAll() throws IOException{
         this.items = read().stream()
                 .skip(1)
                 .map(s -> s.split(REGEX))
@@ -26,7 +25,6 @@ public class CsvParser implements ItemRepository {
         return items;
     }
 
-    //??
     @Override
     public List<Item> changeItemList(List<Item> orderItems) {
         return orderItems.stream()
@@ -36,10 +34,10 @@ public class CsvParser implements ItemRepository {
                 .collect(Collectors.toList());
     }
 
-    //??
     @Override
     public List<Item> updateItems(List<Item> orderItems) {
-        return items.stream()
+        System.out.println("CSVParser클래스 - orderItems = " + orderItems);
+        this.items =  items.stream()
                 .map(item -> {
                     Optional<Item> matchingOrderItem = orderItems.stream()
                             .filter(orderItem -> orderItem.id() == item.id())
@@ -53,41 +51,22 @@ public class CsvParser implements ItemRepository {
                     }
                 })
                 .collect(Collectors.toList());
-    }
-
-    //?????
-    @Override
-    public boolean hasSufficientStock(List<Item> orderItems) {
-        return orderItems.stream()
-                .allMatch(orderItem -> {
-                    long id = orderItem.id();
-                    int quantity = orderItem.stockQuantity();
-                    Optional<Item> matchingItem = items.stream().filter(item -> item.id().equals(id)).findFirst();
-                    return matchingItem.map(item -> {
-                        checkProductStock(item.id(), quantity);
-                        return item.stockQuantity() >= quantity;
-                    }).orElse(false);
-                });
+        return this.items;
     }
 
     @Override
-    public void checkProductStock(long productId, int quantity) {
-        Optional<Item> matchingItem = items.stream().filter(item -> item.id() == productId).findFirst();
-        if (matchingItem.isPresent()) {
-            Item item = matchingItem.get();
-            int stockQuantity = item.stockQuantity();
-            if (stockQuantity < quantity) {
-                throw new SoldOutException("SoldOutException 발생. 주문한 상품량이 재고량보다 큽니다.");
-            }
-        }
+    public void hasSufficientStock(List<Item> orderItems) {
+        orderItems.forEach(orderItem -> {
+            long id = orderItem.id();
+            int quantity = orderItem.stockQuantity();
+            Optional<Item> matchingItem = items.stream()
+                    .filter(item -> item.id().equals(id))
+                    .findFirst();
+            matchingItem.ifPresent(item -> item.checkProductQuantity(quantity));
+        });
     }
 
-    private List<String> read() {
-        try {
-            return Files.readAllLines(Paths.get(DEFAULT_PATH + "/" + fileName));
-        } catch (IOException e) {
-            //Exception -> Concrete Exception
-            throw new RuntimeException(e);
-        }
+    private List<String> read() throws IOException {
+        return Files.readAllLines(Paths.get(DEFAULT_PATH + "/" + fileName));
     }
 }

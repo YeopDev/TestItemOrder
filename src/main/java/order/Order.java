@@ -23,7 +23,6 @@ public record Order(User user, List<Item> orderItems) {
                 .collect(Collectors.joining("\n"));
     }
 
-    //bad case
     public boolean checkDelivery() {
         return calculateTotalPrice() < 50000;
     }
@@ -33,14 +32,6 @@ public record Order(User user, List<Item> orderItems) {
     }
 
     //bad bad case
-    /*public User totalAmountPayment(){
-        int totalAmountIncludingDeliveryFee = calculateTotalPrice();
-        if(checkDelivery()){
-            totalAmountIncludingDeliveryFee += DELIVERY_FEE;
-        }
-        //user.payment(totalAmountIncludingDeliveryFee);
-        return new User(user.id(),user.name(),user.payment(totalAmountIncludingDeliveryFee),totalAmountIncludingDeliveryFee);
-    }*/
     public int totalAmountPayment(){
         int totalAmountIncludingDeliveryFee = calculateTotalPrice();
         if(checkDelivery()){

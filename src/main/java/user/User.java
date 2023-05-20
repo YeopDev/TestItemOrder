@@ -21,7 +21,6 @@ public record User(Long id, String name, int money, int amount) {
     }
 
     public User paymentProgress(int totalAmountIncludingDeliveryFee){
-        int remainingBalance =  payment(totalAmountIncludingDeliveryFee);
-        return new User(id(),name(),remainingBalance,totalAmountIncludingDeliveryFee);
+        return new User(id(),name(),payment(totalAmountIncludingDeliveryFee),totalAmountIncludingDeliveryFee);
     }
 }
