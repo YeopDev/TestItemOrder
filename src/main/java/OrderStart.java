@@ -47,12 +47,11 @@ public class OrderStart {
             String quantity = inputScanner.writeInfo();
 
             if (id.isBlank() && quantity.isBlank()) {
-                orderItems = itemRepository.changeItemList(orderItems);
+                Order order = new Order(user,itemRepository.changeItemList(orderItems));
 
-                Order order = new Order(user,orderItems);
-                user = order.totalAmountPayment();
+                user = user.paymentProgress(order.totalAmountPayment());
 
-                items = itemRepository.updateItems(orderItems);
+                items = itemRepository.updateItems(order.orderItems());
 
                 System.out.println("주문내역:");
                 System.out.println("--------------------------------------");

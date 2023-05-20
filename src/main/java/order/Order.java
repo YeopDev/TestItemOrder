@@ -24,7 +24,6 @@ public record Order(User user, List<Item> orderItems) {
     }
 
     //bad case
-    //totalPrice는 Order가 계산하는데 이걸 왜 또 밖에서 받아와야 함? 그렇네?
     public boolean checkDelivery() {
         return calculateTotalPrice() < 50000;
     }
@@ -34,11 +33,20 @@ public record Order(User user, List<Item> orderItems) {
     }
 
     //bad bad case
-    public User totalAmountPayment(){
+    /*public User totalAmountPayment(){
         int totalAmountIncludingDeliveryFee = calculateTotalPrice();
         if(checkDelivery()){
             totalAmountIncludingDeliveryFee += DELIVERY_FEE;
         }
+        //user.payment(totalAmountIncludingDeliveryFee);
         return new User(user.id(),user.name(),user.payment(totalAmountIncludingDeliveryFee),totalAmountIncludingDeliveryFee);
+    }*/
+    public int totalAmountPayment(){
+        int totalAmountIncludingDeliveryFee = calculateTotalPrice();
+        if(checkDelivery()){
+            totalAmountIncludingDeliveryFee += DELIVERY_FEE;
+            return totalAmountIncludingDeliveryFee;
+        }
+        return totalAmountIncludingDeliveryFee;
     }
 }

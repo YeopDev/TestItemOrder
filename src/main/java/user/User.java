@@ -12,11 +12,16 @@ public record User(Long id, String name, int money, int amount) {
         }
     }
 
-    public int payment(int target) {
+    private int payment(int target) {
         if (money < target) {
             throw new IllegalArgumentException("소지금이 지불금액보다 작습니다.");
         }
         int remainingBalance  = money - target;
         return remainingBalance;
+    }
+
+    public User paymentProgress(int totalAmountIncludingDeliveryFee){
+        int remainingBalance =  payment(totalAmountIncludingDeliveryFee);
+        return new User(id(),name(),remainingBalance,totalAmountIncludingDeliveryFee);
     }
 }
