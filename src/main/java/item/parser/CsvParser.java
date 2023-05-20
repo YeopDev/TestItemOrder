@@ -26,44 +26,21 @@ public class CsvParser implements ItemRepository {
     }
 
     @Override
-    public List<Item> changeItemList(List<Item> orderItems) {
-        return orderItems.stream()
-                .flatMap(orderItem -> this.items.stream()
-                        .filter(item -> item.id() == orderItem.id())
-                        .map(item -> new Item(item.id(), item.name(), item.price(), orderItem.stockQuantity())))
-                .collect(Collectors.toList());
+    public Optional<Item> findById(Long id) {
+        return items.stream()
+                .filter(item -> item.id().equals(id))
+                .findFirst();
     }
 
     @Override
-    public List<Item> updateItems(List<Item> orderItems) {
-        System.out.println("CSVParser클래스 - orderItems = " + orderItems);
-        this.items =  items.stream()
+    public void updateItems(Item inItem) {
+        this.items = items.stream()
                 .map(item -> {
-                    Optional<Item> matchingOrderItem = orderItems.stream()
-                            .filter(orderItem -> orderItem.id() == item.id())
-                            .findFirst();
-                    if (matchingOrderItem.isPresent()) {
-                        int orderQuantity = matchingOrderItem.get().stockQuantity();
-                        int updatedStockQuantity = item.stockQuantity() - orderQuantity;
-                        return new Item(item.id(), item.name(), item.price(), updatedStockQuantity);
-                    } else {
-                        return item;
+                    if (item.equals(inItem)) {
+                        return item.update(inItem);
                     }
-                })
-                .collect(Collectors.toList());
-        return this.items;
-    }
-
-    @Override
-    public void hasSufficientStock(List<Item> orderItems) {
-        orderItems.forEach(orderItem -> {
-            long id = orderItem.id();
-            int quantity = orderItem.stockQuantity();
-            Optional<Item> matchingItem = items.stream()
-                    .filter(item -> item.id().equals(id))
-                    .findFirst();
-            matchingItem.ifPresent(item -> item.checkProductQuantity(quantity));
-        });
+                    return item;
+                }).toList();
     }
 
     private List<String> read() throws IOException {

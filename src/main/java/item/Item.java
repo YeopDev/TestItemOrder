@@ -22,10 +22,6 @@ public record Item(Long id, String name, int price, int stockQuantity) {
         }
     }
 
-    public String itemInfo() {
-        return id() + "\t" + name() + "\t" + price() + "\t" + stockQuantity();
-    }
-
     public boolean checkProductQuantity(int quantity) {
         if (stockQuantity < quantity) {
             throw new SoldOutException("SoldOutException 발생. 주문한 상품량이 재고량보다 큽니다.");

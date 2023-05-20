@@ -10,7 +10,5 @@ public interface ItemRepository {
 
     List<Item> changeItemList(List<Item> orderItems);
 
-    List<Item> updateItems(List<Item> orderItems);
-
-    void hasSufficientStock(List<Item> orderItems);
+    void updateItems(Item item);
 }

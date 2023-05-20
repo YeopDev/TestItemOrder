@@ -3,41 +3,39 @@ package order;
 import item.Item;
 import user.User;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public record Order(User user, List<Item> orderItems) {
+public class Order {
     private static final int DELIVERY_FEE = 2_500;
+    private static final int FREE_DELIVERY_STANDARD_FEE = 50_000;
 
-    public int calculateTotalPrice(){
-        return orderItems().stream()
+    private User user;
+    private List<Item> items;
+
+    public Order(User user, List<Item> items) {
+        if (user == null) {
+            throw new IllegalArgumentException("user 값이 없습니다.");
+        }
+        if (items == null || items.isEmpty()) {
+            throw new IllegalArgumentException("items가 비어있습니다.");
+        }
+        this.user = user;
+        this.items = new ArrayList<>(items);
+        user.paymentProgress(totalAmountPayment());
+    }
+
+    public int totalPrice() {
+        return this.items.stream()
                 .mapToInt(item -> item.price() * item.stockQuantity())
                 .sum();
     }
 
-    //bad case
-    //hint: I/O -> entity ?
-    public String displayOrderList(){
-        return orderItems.stream()
-                .map(item -> item.name() + " - " + item.stockQuantity() + "개")
-                .collect(Collectors.joining("\n"));
-    }
-
-    public boolean checkDelivery() {
-        return calculateTotalPrice() < 50000;
-    }
-
-    public int getDeliveryFee(){
-        return DELIVERY_FEE;
-    }
-
-    //bad bad case
-    public int totalAmountPayment(){
-        int totalAmountIncludingDeliveryFee = calculateTotalPrice();
-        if(checkDelivery()){
-            totalAmountIncludingDeliveryFee += DELIVERY_FEE;
-            return totalAmountIncludingDeliveryFee;
+    public int totalAmountPayment() {
+        int totalPrice = totalPrice();
+        if (totalPrice < FREE_DELIVERY_STANDARD_FEE) {
+            return totalPrice + DELIVERY_FEE;
         }
-        return totalAmountIncludingDeliveryFee;
+        return totalPrice;
     }
 }

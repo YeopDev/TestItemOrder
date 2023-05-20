@@ -12,6 +12,23 @@ public record User(Long id, String name, int money, int amount) {
         }
     }
 
+    public Long id() {
+        return id;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public int money() {
+        return money;
+    }
+
+    public void paymentProgress(int totalAmountIncludingDeliveryFee) {
+        this.money = payment(totalAmountIncludingDeliveryFee);
+    }
+
+    //rename method
     private int payment(int target) {
         if (money < target) {
             throw new IllegalArgumentException("소지금이 지불금액보다 작습니다.");

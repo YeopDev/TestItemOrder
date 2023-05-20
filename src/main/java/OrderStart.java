@@ -1,6 +1,5 @@
 import item.Item;
 import item.parser.CsvParser;
-import item.parser.InputScanner;
 import item.parser.ItemRepository;
 import order.Order;
 import user.User;
@@ -9,72 +8,73 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class OrderStart {
     private static DecimalFormat dc = new DecimalFormat("###,###,###,###");
+    private static final Scanner sc = new Scanner(System.in);
 
     public static void main(String[] args) throws IOException {
-        boolean startYn = true;
-
         ItemRepository itemRepository = new CsvParser();
-
-        List<Item> items = itemRepository.findAll();
-
-        User user = new User(0L, "yeop", 10_000_000, 0);
-
-        List<Item> orderItems = new ArrayList<>();
-
-        InputScanner inputScanner = new InputScanner();
+        User user = new User(0L, "yeop", 10_000_000);
 
         while (true) {
-            String userFix = null;
+            System.out.print("입력(o[order]: 주문, q[quit]: 종료) :");
+            if (List.of("q", "quit").contains(inputCommend())) {
+                System.out.println(" 종료합니다. ");
+                break;
+            }
+            List<Item> items = itemRepository.findAll();
+            System.out.println(" 상품번호  상품명  판매가격  재고수량 ");
+            items.forEach(item -> System.out.println(item.id() + "\t" + item.name() + "\t" + item.price() + "\t" + item.stockQuantity()));
 
-            if (startYn) {
-                System.out.print("입력(o[order]: 주문, q[quit]: 종료) :");
-                userFix = inputScanner.checkOrderValidation();
-                if (userFix.equals("q") || userFix.equals("quit")) {
-                    System.out.println(" 종료합니다. ");
+            List<Item> orderItems = new ArrayList<>();
+            while (true) {
+                System.out.print("상품번호 : ");
+                String id = sc.nextLine();
+
+                System.out.print("수량 : ");
+                String quantity = sc.nextLine();
+
+                if (id.isBlank() && quantity.isBlank()) {
                     break;
                 }
-                System.out.println(" 상품번호  상품명  판매가격  재고수량 ");
-                items.forEach(raw -> System.out.println(raw.itemInfo()));
-                startYn = false;
+
+                Item item = itemRepository.findById(Long.parseLong(id))
+                        .orElseThrow(() -> new IllegalArgumentException("상품 번호 잘못댐"));
+
+                orderItems.add(item.checkStockQuantity(Integer.parseInt(quantity)));
             }
 
-            System.out.print("상품번호 : ");
-            String id = inputScanner.writeInfo();
+            Order order = new Order(user, orderItems);
+            orderItems.forEach(itemRepository::updateItems);
 
-            System.out.print("수량 : ");
-            String quantity = inputScanner.writeInfo();
-
-            if (!id.isBlank() && !quantity.isBlank()) {
-                orderItems.add(new Item(Long.parseLong(id), "0", 0, Integer.parseInt(quantity)));
-
-            } else {
-                orderItems = itemRepository.changeItemList(orderItems);
-
-                Order order = new Order(user,orderItems);
-                itemRepository.hasSufficientStock(order.orderItems());
-
-                int totalAmountPayment = order.totalAmountPayment();
-
-                user = user.paymentProgress(totalAmountPayment);
-
-                items = itemRepository.updateItems(orderItems);
-
-                System.out.println("주문내역:");
-                System.out.println("--------------------------------------");
-                System.out.println(order.displayOrderList());
-                System.out.println("--------------------------------------");
-                System.out.println("주문금액: " + dc.format(order.calculateTotalPrice()) + "원");
-                if(order.checkDelivery()) System.out.println("배송비: " + dc.format(order.getDeliveryFee()) + "원");
-                System.out.println("--------------------------------------");
-                System.out.println("지불금액: " + dc.format(user.amount()) + "원");
-                System.out.println("user의 소지금: " + dc.format(user.money()) + "원");
-                System.out.println("--------------------------------------");
-                orderItems.clear();
-                startYn = true;
-            }
+            System.out.println("""
+                    주문 내역:
+                    --------------------------------------
+                    %s
+                    --------------------------------------
+                    주문 금액: %s원
+                    %s
+                    --------------------------------------
+                    지불 금액: %s원
+                    소지 금액: %s원
+                    """.strip().formatted(
+                    orderItems.stream().map(item -> "%s - %s개".formatted(item.name(), item.stockQuantity())).collect(Collectors.joining()),
+                    dc.format(order.totalPrice()),
+                    order.hasDeliveryFee() ? "배송비: %s원".formatted(dc.format(order.deliveryFee())) : "",
+                    dc.format(order.totalAmountPayment()),
+                    dc.format(user.money()))
+            );
         }
+    }
+
+    public static String inputCommend() {
+        String target = sc.nextLine().toLowerCase();
+        if (!target.matches("(o|q|order|quit)")) {
+            throw new IllegalArgumentException("o, order, q, quit 만 입력 가능합니다.");
+        }
+        return target;
     }
 }
