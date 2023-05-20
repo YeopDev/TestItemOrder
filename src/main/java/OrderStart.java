@@ -51,10 +51,16 @@ public class OrderStart {
                 orderItems.add(new Item(Long.parseLong(id), "0", 0, Integer.parseInt(quantity)));
 
             } else {
-                Order order = new Order(user,itemRepository.changeItemList(orderItems));
+                orderItems = itemRepository.changeItemList(orderItems);
+
+                Order order = new Order(user,orderItems);
                 itemRepository.hasSufficientStock(order.orderItems());
-                user = user.paymentProgress(order.totalAmountPayment());
-                items = itemRepository.updateItems(order.orderItems());
+
+                int totalAmountPayment = order.totalAmountPayment();
+
+                user = user.paymentProgress(totalAmountPayment);
+
+                items = itemRepository.updateItems(orderItems);
 
                 System.out.println("주문내역:");
                 System.out.println("--------------------------------------");
