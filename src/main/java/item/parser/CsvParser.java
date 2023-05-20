@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class CsvParser implements ItemRepository {
     private static final String DEFAULT_PATH = "./src/main/resources";
@@ -16,12 +15,14 @@ public class CsvParser implements ItemRepository {
     private List<Item> items;
 
     @Override
-    public List<Item> findAll() throws IOException{
-        this.items = read().stream()
-                .skip(1)
-                .map(s -> s.split(REGEX))
-                .map(row -> new Item(Long.parseLong(row[0]), row[1], Integer.parseInt(row[2]), Integer.parseInt(row[3])))
-                .toList();
+    public List<Item> findAll() throws IOException {
+        if (items == null) {
+            this.items = read().stream()
+                    .skip(1)
+                    .map(s -> s.split(REGEX))
+                    .map(row -> new Item(Long.parseLong(row[0]), row[1], Integer.parseInt(row[2]), Integer.parseInt(row[3])))
+                    .toList();
+        }
         return items;
     }
 

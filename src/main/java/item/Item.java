@@ -2,7 +2,7 @@ package item;
 
 import exception.SoldOutException;
 
-import java.util.Optional;
+import java.util.Objects;
 
 import static java.util.Objects.isNull;
 
@@ -22,10 +22,27 @@ public record Item(Long id, String name, int price, int stockQuantity) {
         }
     }
 
-    public boolean checkProductQuantity(int quantity) {
+    public Item checkStockQuantity(int quantity) {
         if (stockQuantity < quantity) {
             throw new SoldOutException("SoldOutException 발생. 주문한 상품량이 재고량보다 큽니다.");
         }
-        return true;
+        return new Item(id, name, price, quantity);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Item item = (Item) o;
+        return id.equals(item.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    public Item update(Item inItem) {
+        return new Item(id, name, price, stockQuantity - inItem.stockQuantity);
     }
 }

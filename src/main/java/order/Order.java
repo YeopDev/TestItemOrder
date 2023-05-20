@@ -38,4 +38,12 @@ public class Order {
         }
         return totalPrice;
     }
+
+    public boolean hasDeliveryFee() {
+        return totalPrice() < FREE_DELIVERY_STANDARD_FEE;
+    }
+
+    public int deliveryFee() {
+        return DELIVERY_FEE;
+    }
 }
