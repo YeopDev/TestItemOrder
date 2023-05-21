@@ -12,10 +12,10 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class OrderStart {
-    private static DecimalFormat dc = new DecimalFormat("###,###,###,###");
+    private static final DecimalFormat dc = new DecimalFormat("###,###,###,###");
     private static final Scanner sc = new Scanner(System.in);
 
-    public static void main(String[] args) throws IOException {
+    public void executionOrder() throws IOException {
         ItemRepository itemRepository = new CsvParser();
         User user = new User(0L, "yeop", 10_000_000);
 
@@ -29,23 +29,7 @@ public class OrderStart {
             System.out.println(" 상품번호  상품명  판매가격  재고수량 ");
             items.forEach(item -> System.out.println(item.id() + "\t" + item.name() + "\t" + item.price() + "\t" + item.stockQuantity()));
 
-            List<Item> orderItems = new ArrayList<>();
-            while (true) {
-                System.out.print("상품번호 : ");
-                String id = sc.nextLine();
-
-                System.out.print("수량 : ");
-                String quantity = sc.nextLine();
-
-                if (id.isBlank() && quantity.isBlank()) {
-                    break;
-                }
-
-                Item item = itemRepository.findById(Long.parseLong(id))
-                        .orElseThrow(() -> new IllegalArgumentException("상품 번호 잘못댐"));
-
-                orderItems.add(item.checkStockQuantity(Integer.parseInt(quantity)));
-            }
+            List<Item> orderItems = startOrder(itemRepository);
 
             Order order = new Order(user, orderItems);
             orderItems.forEach(itemRepository::updateItems);
@@ -61,7 +45,7 @@ public class OrderStart {
                     지불 금액: %s원
                     소지 금액: %s원
                     """.strip().formatted(
-                    orderItems.stream().map(item -> "%s - %s개".formatted(item.name(), item.stockQuantity())).collect(Collectors.joining()),
+                    orderItems.stream().map(item -> "%s - %s개".formatted(item.name(), item.stockQuantity())).collect(Collectors.joining("\n")),
                     dc.format(order.totalPrice()),
                     order.hasDeliveryFee() ? "배송비: %s원".formatted(dc.format(order.deliveryFee())) : "",
                     dc.format(order.totalAmountPayment()),
@@ -70,11 +54,32 @@ public class OrderStart {
         }
     }
 
-    public static String inputCommend() {
+    private String inputCommend() {
         String target = sc.nextLine().toLowerCase();
         if (!target.matches("(o|q|order|quit)")) {
             throw new IllegalArgumentException("o, order, q, quit 만 입력 가능합니다.");
         }
         return target;
+    }
+
+    private List<Item> startOrder(ItemRepository itemRepository) {
+        List<Item> orderItems = new ArrayList<>();
+        while (true) {
+            System.out.print("상품번호 : ");
+            String id = sc.nextLine();
+
+            System.out.print("수량 : ");
+            String quantity = sc.nextLine();
+
+            if (id.isBlank() && quantity.isBlank()) {
+                break;
+            }
+
+            Item item = itemRepository.findById(Long.parseLong(id))
+                    .orElseThrow(() -> new IllegalArgumentException("상품 번호가 잘못되었습니다."));
+
+            orderItems.add(item.checkStockQuantity(Integer.parseInt(quantity)));
+        }
+        return orderItems;
     }
 }

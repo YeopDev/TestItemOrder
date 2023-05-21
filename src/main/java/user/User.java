@@ -11,8 +11,11 @@ public class User {
         if (isNull(id) || id < 0) {
             throw new IllegalArgumentException("id가 올바른 값이 아닙니다.");
         }
-        if (isNull(name) || name.equals("")) {
+        if (isNull(name) || name.equals("") ||name.equals(" ")) {
             throw new IllegalArgumentException("이름이 올바른 값이 아닙니다.");
+        }
+        if (money < 0){
+            throw new IllegalArgumentException("소지금이 올바른 값이 아닙니다.");
         }
         this.id = id;
         this.name = name;
